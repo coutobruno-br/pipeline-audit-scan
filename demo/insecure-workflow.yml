@@ -1,0 +1,25 @@
+# Pipeline Audit Kit — a deliberately broken workflow, for demos and for testing
+# audit-repo.sh. Every line marked with an ID is a finding. Do not use.
+name: deploy
+
+on:
+  pull_request_target:                       # SEC-06 with the checkout below
+
+# SEC-02: no permissions block
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4            # SEC-01: mutable tag
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}   # SEC-06: runs untrusted PR code
+          allow-unsafe-pr-checkout: true                   # SEC-06
+      - name: Greet
+        run: echo "Building ${{ github.event.pull_request.title }}"   # SEC-06: script injection
+      - uses: aws-actions/configure-aws-credentials@main # SEC-01: branch ref
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}         # SEC-03: static key
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # SEC-03: static key
+          aws-region: us-east-1
+      - run: kubectl apply -f k8s/   # DEP-01: CI applies to the cluster directly

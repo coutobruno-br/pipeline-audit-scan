@@ -1,0 +1,10 @@
+# pipeline-audit-scan — keep the SHA pins fresh (SEC-01, SEC-04).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

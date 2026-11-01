@@ -1,0 +1,49 @@
+# pipeline-audit-scan — CI: lint the scanner, prove it catches the demo, and
+# pass its own scan. Checks: SRC-03 SRC-04 SEC-01 SEC-02 SEC-04
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# SEC-02: read-only token.
+permissions:
+  contents: read
+
+# SRC-03: a new push to the same PR cancels the stale run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    name: lint and self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: shellcheck
+        run: shellcheck audit-repo.sh
+      - name: the demo must fail
+        run: |
+          mkdir -p "$RUNNER_TEMP/demo/.github/workflows"
+          cp demo/insecure-workflow.yml "$RUNNER_TEMP/demo/.github/workflows/deploy.yml"
+          set +e
+          ./audit-repo.sh --no-color "$RUNNER_TEMP/demo"
+          rc=$?
+          set -e
+          test "$rc" -eq 1
+      - name: this repository must pass its own scan
+        run: ./audit-repo.sh --no-color .
+      # SEC-04: a scanner that can fail the build.
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
