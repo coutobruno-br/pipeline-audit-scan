@@ -1,0 +1,2 @@
+# Keep the script runnable on every platform (bash breaks on CRLF).
+* text=auto eol=lf
