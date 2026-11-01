@@ -101,7 +101,7 @@ jobs:
       - name: pipeline audit
         run: |
           curl -fsSL -o "$RUNNER_TEMP/audit-repo.sh" \
-            https://raw.githubusercontent.com/coutobruno-br/pipeline-audit-scan/main/audit-repo.sh
+            https://raw.githubusercontent.com/coutobruno-br/pipeline-audit-scan/a564f152b8ae14fbee2a84c2f0eba7d787dff6f9/audit-repo.sh
           bash "$RUNNER_TEMP/audit-repo.sh" --no-color .
 ```
 
